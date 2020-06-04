@@ -188,7 +188,7 @@ const MainNavigator = createDrawerNavigator(
 );
 
 class Main extends Component {
-    render() {
+    render() { 
         return (
             <View style={{
                 flex: 1,
