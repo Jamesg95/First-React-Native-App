@@ -4,6 +4,8 @@ import { Input, CheckBox, Button, Icon } from 'react-native-elements';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
+import * as ImageManipulator from 'expo-image-manipulator'
+import * as MediaLibrary from 'expo-media-library';
 import { createBottomTabNavigator } from 'react-navigation';
 import { baseUrl } from '../shared/BaseURL';
 
@@ -152,11 +154,19 @@ class RegisterTab extends Component {
                 allowsEditing: true,
                 aspect: [1, 1]
             });
+            
             if (!capturedImage.cancelled) {
                 console.log(capturedImage);
-                this.setState({imageUrl: capturedImage.uri});
+                MediaLibrary.saveToLibraryAsync(capturedImage.uri)
+                this.processImage(capturedImage.uri); 
             }
         }
+    }
+
+    processImage = async (imgUri) => {
+        const processedImage = await ImageManipulator.manipulateAsync(imgUri, [{resize: {width:400}}], { format: 'png'})
+        console.log(processedImage)
+        this.setState({imageUrl: processedImage.uri})
     }
 
     handleRegister() {
@@ -171,7 +181,24 @@ class RegisterTab extends Component {
         }
     }
 
+    getImageFromGallery = async () => {
+        const galleryPermission = await Permissions.askAsync(Permissions.CAMERA_ROLL)
+        const cameraRollPermission = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+        if (galleryPermission.status === 'granted' && cameraRollPermission.status === 'granted') {
+            const capturedImage = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                aspect: [1, 1]
+            });
+            if (!capturedImage.cancelled) {
+                console.log(capturedImage);
+                this.processImage(capturedImage.uri);
+            }
+        }
+    }
+
     render() {
+        console.log(this.state.imageUrl)
         return (
             <ScrollView>
                 <View style={styles.container}>
@@ -184,6 +211,10 @@ class RegisterTab extends Component {
                         <Button
                             title='Camera'
                             onPress={this.getImageFromCamera}
+                        />
+                        <Button
+                            title='Gallery'
+                            onPress={this.getImageFromGallery}
                         />
                     </View>
                     <Input
